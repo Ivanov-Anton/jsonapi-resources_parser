@@ -1,0 +1,57 @@
+name: macOS Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        brew install json-c
+
+    - name: Build
+      run: |
+        gcc -Wall -I/opt/homebrew/include rails_parser.c -o rails_parser -L/opt/homebrew/lib -ljson-c
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: rails-parser
+        path: rails_parser
+        retention-days: 7
+
+  test:
+    needs: build
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: rails-parser
+
+    - name: Make parser executable
+      run: chmod +x rails_parser
+
+    - name: Run tests
+      run: |
+        ./rails_parser app/resources/api/rest/customer/v1/ config/routes.rb
+        test -f api_spec.json || exit 1  # Verify that output file was created
+        test -s api_spec.json || exit 1  # Verify that output file is not empty
+
+    - name: Upload test artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: api-spec
+        path: api_spec.json
+        retention-days: 7
