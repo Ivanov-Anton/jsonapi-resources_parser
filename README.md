@@ -11,6 +11,7 @@ gcc -Wall -I/opt/homebrew/include jsonapi-resources_parser.c -o jsonapi-resource
 
 how to use 
 
+
 ```bash
 
 ./rails_parser app/resources/api/rest/customer/v1/ config/routes.rb
